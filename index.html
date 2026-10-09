@@ -29,24 +29,19 @@
             <button class="btn btn-salir" onclick="salirJuego()">SALIR</button>
         </div>
     </div>
-
-    <script>
+<script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Adaptar pantalla al tamaño del navegador
         canvas.width = window.innerWidth > 900 ? 900 : window.innerWidth;
         canvas.height = window.innerHeight;
 
-        # DIMENSIONES DEL RÍO GIGANTE (¡Mapa el doble de grande para explorar!)
         const MAP_WIDTH = 6000;
         const MAP_HEIGHT = 2000;
 
-        // Variables de Control y Juego
         let axolo, joystick, algas, burbujas, plantas, piedras, depredador;
         let score, tiempoRestante, juegoActivo, anguloCola, intervaloTiempo;
 
-        // Estructura de controles del Joystick Táctil
         joystick = { active: false, startX: 0, startY: 0, dirX: 0, dirY: 0 };
         const zone = document.getElementById("joystick-zone");
         const knob = document.getElementById("joystick-knob");
@@ -60,7 +55,7 @@
 
         window.addEventListener("touchmove", (e) => {
             if (!joystick.active) return;
-            let t = e.touches[0];
+            let t = e.touches;
             let dx = t.clientX - joystick.startX;
             let dy = t.clientY - joystick.startY;
             let dist = Math.sqrt(dx*dx + dy*dy);
@@ -77,7 +72,6 @@
             joystick.dirX = 0; joystick.dirY = 0;
         });
 
-        // Controles de Teclado (PC)
         let keys = {};
         window.addEventListener("keydown", (e) => keys[e.key] = true);
         window.addEventListener("keyup", (e) => keys[e.key] = false);
@@ -85,14 +79,12 @@
         function inicializarObjetos() {
             axolo = { x: canvas.width/2, y: MAP_HEIGHT/2, speed: 6.5, radius: 24 };
             score = 0;
-            tiempoRestante = 180; // 3 minutos en segundos
+            tiempoRestante = 180;
             juegoActivo = true;
             anguloCola = 0;
             
-            // Depredador Invasor (Pez Carpa)
             depredador = { x: -200, y: Math.random()*MAP_HEIGHT, vx: 5, vy: 1, radius: 45, activo: true };
 
-            // Generar Algas (Verdes comunes y Doradas con puntos extras)
             algas = [];
             for(let i=0; i<35; i++) {
                 algas.push({
@@ -102,7 +94,6 @@
                 });
             }
 
-            // Entorno: Burbujas, Mucho Follaje de Plantas y Piedras en el fondo
             burbujas = []; for(let i=0; i<80; i++) burbujas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*MAP_HEIGHT, r: Math.random()*4+2, v: Math.random()*1.5+0.5});
             plantas = []; for(let i=0; i<60; i++) plantas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*400 + (MAP_HEIGHT-450), h: Math.random()*120+70});
             piedras = []; for(let i=0; i<40; i++) piedras.push({x: Math.random()*MAP_WIDTH, y: MAP_HEIGHT - 35 - Math.random()*20, r: Math.random()*25+15});
@@ -112,7 +103,7 @@
             if (!juegoActivo) return;
             tiempoRestante--;
             if (tiempoRestante <= 0) {
-                finalizarJuego("¡Se acabó el tiempo!", "¡Lograste sobrevivir los 3 minutos en el río!");
+                finalizarJuego("¡FIN DEL TIEMPO!", "¡Lograste mantener a Axolo a salvo durante los 3 minutos!");
             }
         }
 
@@ -133,10 +124,9 @@
         }
 
         function salirJuego() {
-            window.location.href = "https://google.com"; // Redirección limpia al salir
+            window.location.href = "https://google.com";
         }
-
-        function update() {
+function update() {
             if (!juegoActivo) return;
 
             let moviendose = false;
@@ -151,16 +141,13 @@
                 moviendose = true;
             }
 
-            // Mantener al ajolote dentro del lecho del río
             if(axolo.x < 30) axolo.x = 30; if(axolo.x > MAP_WIDTH-30) axolo.x = MAP_WIDTH-30;
             if(axolo.y < 30) axolo.y = 30; if(axolo.y > MAP_HEIGHT-40) axolo.y = MAP_HEIGHT-40;
 
             anguloCola += moviendose ? 0.22 : 0.04;
 
-            // Movimiento de Burbujas
             burbujas.forEach(b => { b.y -= b.v; if(b.y < 0) { b.y = MAP_HEIGHT; b.x = Math.random()*MAP_WIDTH; } });
 
-            // Inteligencia del Depredador (La Carpa te busca y patrulla)
             depredador.x += depredador.vx;
             depredador.y += Math.sin(depredador.x * 0.01) * 2;
             if (depredador.x > MAP_WIDTH + 200) {
@@ -169,18 +156,16 @@
                 depredador.vx = Math.random() * 3 + 5;
             }
 
-            # COLISIÓN FÚNEBRE CON EL DEPREDADOR
             let distDepredador = Math.sqrt((axolo.x - depredador.x)**2 + (axolo.y - depredador.y)**2);
             if (distDepredador < (axolo.radius + depredador.radius - 10)) {
-                finalizarJuego("💀 ¡AXOLO FUE CAPTURADO!", "Un pez Carpa gigante te alcanzó en las corrientes profundas.");
+                finalizarJuego("💀 ¡AXOLO FUE CAPTURADO!", "El pez Carpa gigante te alcanzó en las profundidades.");
             }
 
-            // Colisiones y recolección de algas comunes y doradas
             algas.forEach((alga, idx) => {
                 let dist = Math.sqrt((axolo.x - alga.x)**2 + (axolo.y - alga.y)**2);
-                if(dist < (axolo.radius + 15)) {
+                if(dist < (axolo.radius + 14)) {
                     if (alga.tipo === "dorada") {
-                        score += 5; // Puntos extra
+                        score += 5;
                     } else {
                         score += 1;
                     }
@@ -196,111 +181,105 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Control Dinámico de la Cámara Modular
             let camX = axolo.x - canvas.width / 2;
             let camY = axolo.y - canvas.height / 2;
             if(camX < 0) camX = 0; if(camX > MAP_WIDTH - canvas.width) camX = MAP_WIDTH - canvas.width;
             if(camY < 0) camY = 0; if(camY > MAP_HEIGHT - canvas.height) camY = MAP_HEIGHT - canvas.height;
 
-            # 1. PINTAR EL FONDO DEL RÍO (Tierra, lodo profundo y agua)
+            ctx.fillStyle = "#0f2d41"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#1c140e"; ctx.fillRect(0 - camX, MAP_HEIGHT - 40 - camY, MAP_WIDTH, 60);
 
-ctx.fillStyle = "#0f2d41"; ctx.fillRect(0, 0, canvas.width, canvas.height); // Agua profunda
-// Dibujar lecho de tierra al fondo del mapa gigante
-ctx.fillStyle = "#1c140e";
-ctx.fillRect(0 - camX, MAP_HEIGHT - 40 - camY, MAP_WIDTH, 60);
-// 2. Renderizar Piedras Sólidas
-ctx.fillStyle = "#4a4f54";
-piedras.forEach(p => {
-ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r, 0, Math.PI*2); ctx.fill();
-});
-// 3. Renderizar Gran Follaje de Plantas Verdes
-plantas.forEach(p => {
-ctx.strokeStyle = "#1b4d22"; ctx.lineWidth = 10; ctx.lineCap = "round";
-ctx.beginPath(); ctx.moveTo(p.x - camX, p.y - camY);
-ctx.lineTo(p.x + 15 - camX, p.y - p.h - camY); ctx.stroke();
-ctx.fillStyle = "#2e7d32"; ctx.beginPath(); ctx.arc(p.x + 15 - camX, p.y - p.h - camY, 14, 0, Math.PI*2); ctx.fill();
-});
-// 4. Renderizar Burbujas Ambientales
-ctx.strokeStyle = "rgba(40, 110, 140, 0.4)"; ctx.lineWidth = 1.5;
-burbujas.forEach(b => {
-ctx.beginPath(); ctx.arc(b.x - camX, b.y - camY, b.r, 0, Math.PI*2); ctx.stroke();
-});
-// 5. Renderizar Algas (Comunes verdes y Especiales doradas)
-algas.forEach(alga => {
-ctx.fillStyle = alga.tipo === "dorada" ? "#ffd700" : "#388e3c";
-ctx.beginPath(); ctx.arc(alga.x - camX, alga.y - camY, alga.tipo === "dorada" ? 18 : 14, 0, Math.PI2); ctx.fill();
-// Destello interior del alga
-ctx.fillStyle = alga.tipo === "dorada" ? "#ffffff" : "#81c784";
-ctx.beginPath(); ctx.arc(alga.x - camX + 2, alga.y - camY - 2, 4, 0, Math.PI2); ctx.fill();
-});
-# 6. RENDERIZAR DEPREDADOR (Pez Carpa Invasora)
-let cx = depredador.x - camX; let cy = depredador.y - camY;
-ctx.fillStyle = "#d35400"; ctx.beginPath(); // Cuerpo naranja oscuro
-ctx.ellipse(cx, cy, depredador.radius, depredador.radius0.6, 0, 0, Math.PI2); ctx.fill();
-// Aleta trasera de la carpa
-ctx.fillStyle = "#a04000"; ctx.beginPath();
-ctx.moveTo(cx - depredador.radius, cy); ctx.lineTo(cx - depredador.radius - 25, cy - 20);
-ctx.lineTo(cx - depredador.radius - 25, cy + 20); ctx.fill();
-// Ojo malvado
-ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cx + 25, cy - 8, 7, 0, Math.PI2); ctx.fill();
-ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(cx + 27, cy - 8, 4, 0, Math.PI2); ctx.fill();
-# 7. DIBUJAR DETALLADO A AXOLO (EL AJOLOTE - CORREGIDO DOS OJOS)
-let sx = axolo.x - camX; let sy = axolo.y - camY;
-let offsetCola = Math.sin(anguloCola) * 14;
-// Patitas articuladas
-ctx.strokeStyle = "#ffb6c1"; ctx.lineWidth = 6; ctx.lineCap = "round";
-ctx.beginPath(); ctx.moveTo(sx - 12, sy + 10); ctx.lineTo(sx - 26, sy + 28); ctx.stroke();
-ctx.beginPath(); ctx.moveTo(sx + 12, sy + 10); ctx.lineTo(sx + 26, sy + 28); ctx.stroke();
-ctx.beginPath(); ctx.moveTo(sx - 15, sy - 8); ctx.lineTo(sx - 28, sy - 4); ctx.stroke();
-ctx.beginPath(); ctx.moveTo(sx + 15, sy - 8); ctx.lineTo(sx + 28, sy - 4); ctx.stroke();
-// Cola ondeante completa con su aleta dorsal
-ctx.fillStyle = "#ffb6c1"; ctx.beginPath();
-ctx.moveTo(sx, sy + 15); ctx.lineTo(sx + offsetCola0.5, sy + 40);
-ctx.lineTo(sx + offsetCola, sy + 65); ctx.lineTo(sx, sy + 15); ctx.fill();
-ctx.fillStyle = "#ff1493"; ctx.beginPath(); ctx.arc(sx + offsetCola, sy + 65, 8, 0, Math.PI2); ctx.fill();
-// Las 6 Ramificaciones de Branquias Rosas Intensas a los lados de la cabeza
-ctx.fillStyle = "#ff1493";
-[-18, -8, 2, 12].forEach(i => {
-ctx.beginPath(); ctx.arc(sx - 24, sy - 12 + i, 5.5, 0, Math.PI2); ctx.fill();
-ctx.beginPath(); ctx.arc(sx + 24, sy - 12 + i, 5.5, 0, Math.PI2); ctx.fill();
-});
-// Cuerpo central
-ctx.fillStyle = "#ffb6c1"; ctx.beginPath();
-ctx.ellipse(sx, sy, 20, 25, 0, 0, Math.PI*2); ctx.fill();
-// Cabeza grande y tierna
-ctx.beginPath(); ctx.arc(sx, sy - 14, 23, 0, Math.PI*2); ctx.fill();
-// CORRECCIÓN ABSOLUTA: Renderizado explícito de los DOS ojos simétricos
-ctx.fillStyle = "#000000";
-ctx.beginPath(); ctx.arc(sx - 9, 201 - 215 + sy, 4.5, 0, Math.PI2); ctx.fill(); # Ojo Izquierdo
-ctx.beginPath(); ctx.arc(sx + 9, 201 - 215 + sy, 4.5, 0, Math.PI2); ctx.fill(); # Ojo Derecho
-// Brillo blanco en los dos ojitos
-ctx.fillStyle = "#ffffff";
-ctx.beginPath(); ctx.arc(sx - 8, sy - 15, 1.5, 0, Math.PI2); ctx.fill();
-ctx.beginPath(); ctx.arc(sx + 10, sy - 15, 1.5, 0, Math.PI2); ctx.fill();
-// Sonrisa tierna feliz
-ctx.strokeStyle = "#7b3f00"; ctx.lineWidth = 2.5; ctx.beginPath();
-ctx.arc(sx, sy - 11, 6, 0, Math.PI); ctx.stroke();
-// INTERFAZ DE USUARIO FIJA (HUD)
-ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(15, 15, 360, 85);
-ctx.fillStyle = "#fff"; ctx.font = "bold 16px monospace";
-// Formatear el reloj del temporizador (Minutos:Segundos)
-let mins = Math.floor(tiempoRestante / 60);
-let segs = tiempoRestante % 60;
-let relojTexto = ⏱️ TIEMPO: ${mins}:${segs < 10 ? '0' : ''}${segs};
-ctx.fillText(🌱 PUNTOS DE RÍO: ${score}, 30, 42);
-ctx.fillText(relojTexto, 30, 68);
-// Advertencia de peligro si el depredador se acerca a tu pantalla
-if (Math.abs(depredador.x - axolo.x) < 600) {
-ctx.fillStyle = "#ff3333"; ctx.font = "bold 14px monospace";
-ctx.fillText("⚠️ ¡DEPREDADOR DETECTADO CERCA!", 30, 90);
-}
-}
-function gameLoop() {
-update();
-draw();
-requestAnimationFrame(gameLoop);
-}
-// Arranque Maestro del Motor
-inicializarObjetos();
-intervaloTiempo = setInterval(contarTiempo, 1000);
-gameLoop();
+            piedras.forEach(p => {
+                ctx.fillStyle = "#4a4f54"; ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r, 0, Math.PI*2); ctx.fill();
+            });
+
+            plantas.forEach(p => {
+                ctx.strokeStyle = "#1b4d22"; ctx.lineWidth = 10; ctx.lineCap = "round";
+                ctx.beginPath(); ctx.moveTo(p.x - camX, p.y - camY);
+                ctx.lineTo(p.x + 15 - camX, p.y - p.h - camY); ctx.stroke();
+                ctx.fillStyle = "#2e7d32"; ctx.beginPath(); ctx.arc(p.x + 15 - camX, p.y - p.h - camY, 14, 0, Math.PI*2); ctx.fill();
+            });
+
+            ctx.strokeStyle = "rgba(40, 110, 140, 0.4)"; ctx.lineWidth = 1.5;
+            burbujas.forEach(b => {
+                ctx.beginPath(); ctx.arc(b.x - camX, b.y - camY, b.r, 0, Math.PI*2); ctx.stroke();
+            });
+
+            algas.forEach(alga => {
+                ctx.fillStyle = alga.tipo === "dorada" ? "#ffd700" : "#388e3c";
+                ctx.beginPath(); ctx.arc(alga.x - camX, alga.y - camY, alga.tipo === "dorada" ? 18 : 14, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = alga.tipo === "dorada" ? "#ffffff" : "#81c784";
+                ctx.beginPath(); ctx.arc(alga.x - camX + 2, alga.y - camY - 2, 4, 0, Math.PI*2); ctx.fill();
+            });
+
+            let cx = depredador.x - camX; let cy = depredador.y - camY;
+            ctx.fillStyle = "#d35400"; ctx.beginPath();
+            ctx.ellipse(cx, cy, depredador.radius, depredador.radius*0.6, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#a04000"; ctx.beginPath();
+            ctx.moveTo(cx - depredador.radius, cy); ctx.lineTo(cx - depredador.radius - 25, cy - 20);
+            ctx.lineTo(cx - depredador.radius - 25, cy + 20); ctx.fill();
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cx + 25, cy - 8, 7, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(cx + 27, cy - 8, 4, 0, Math.PI*2); ctx.fill();
+
+            let sx = axolo.x - camX; let sy = axolo.y - camY;
+            let offsetCola = Math.sin(anguloCola) * 14;
+
+            ctx.strokeStyle = "#ffb6c1"; ctx.lineWidth = 6; ctx.lineCap = "round";
+            ctx.beginPath(); ctx.moveTo(sx - 12, sy + 10); ctx.lineTo(sx - 26, sy + 28); stroke();
+            ctx.beginPath(); ctx.moveTo(sx + 12, sy + 10); ctx.lineTo(sx + 26, sy + 28); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(sx - 15, sy - 8); ctx.lineTo(sx - 28, sy - 4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(sx + 15, sy - 8); ctx.lineTo(sx + 28, sy - 4); ctx.stroke();
+
+            ctx.fillStyle = "#ffb6c1"; ctx.beginPath();
+            ctx.moveTo(sx, sy + 15); ctx.lineTo(sx + offsetCola*0.5, sy + 40);
+            ctx.lineTo(sx + offsetCola, sy + 65); ctx.lineTo(sx, sy + 15); ctx.fill();
+            ctx.fillStyle = "#ff1493"; ctx.beginPath(); ctx.arc(sx + offsetCola, sy + 65, 8, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = "#ff1493";
+            [-18, -8, 2, 12].forEach(i => {
+                ctx.beginPath(); ctx.arc(sx - 24, sy - 12 + i, 5.5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx + 24, sy - 12 + i, 5.5, 0, Math.PI*2); ctx.fill();
+            });
+
+            ctx.fillStyle = "#ffb6c1"; ctx.beginPath(); ctx.ellipse(sx, sy, 20, 25, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sx, sy - 14, 23, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = "#000000";
+            ctx.beginPath(); ctx.arc(sx - 9, sy - 14, 4.5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sx + 9, sy - 14, 4.5, 0, Math.PI*2); ctx.fill();
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath(); ctx.arc(sx - 8, sy - 15, 1.5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sx + 10, sy - 15, 1.5, 0, Math.PI*2); ctx.fill();
+
+            ctx.strokeStyle = "#7b3f00"; ctx.lineWidth = 2.5; ctx.beginPath();
+            ctx.arc(sx, sy - 11, 6, 0, Math.PI); ctx.stroke();
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(15, 15, 360, 85);
+            ctx.fillStyle = "#fff"; ctx.font = "bold 16px monospace";
+            
+            let mins = Math.floor(tiempoRestante / 60);
+            let segs = tiempoRestante % 60;
+            let relojTexto = `⏱️ TIEMPO: ${mins}:${segs < 10 ? '0' : ''}${segs}`;
+            
+            ctx.fillText(`🌱 PUNTOS DE RÍO: ${score}`, 30, 42);
+            ctx.fillText(relojTexto, 30, 68);
+            
+            if (Math.abs(depredador.x - axolo.x) < 600) {
+                ctx.fillStyle = "#ff3333"; ctx.font = "bold 14px monospace";
+                ctx.fillText("⚠️ ¡DEPREDADOR DETECTADO CERCA!", 30, 90);
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        inicializarObjetos();
+        intervaloTiempo = setInterval(contarTiempo, 1000);
+        gameLoop();
+    </script>
+</body>
+</html>
