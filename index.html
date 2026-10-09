@@ -29,6 +29,7 @@
             <button class="btn btn-salir" onclick="salirJuego()">SALIR</button>
         </div>
     </div>
+
 <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
@@ -55,7 +56,7 @@
 
         window.addEventListener("touchmove", (e) => {
             if (!joystick.active) return;
-            let t = e.touches;
+            let t = e.touches[0];
             let dx = t.clientX - joystick.startX;
             let dy = t.clientY - joystick.startY;
             let dist = Math.sqrt(dx*dx + dy*dy);
@@ -126,6 +127,7 @@
         function salirJuego() {
             window.location.href = "https://google.com";
         }
+
 function update() {
             if (!juegoActivo) return;
 
@@ -225,7 +227,7 @@ function update() {
             let offsetCola = Math.sin(anguloCola) * 14;
 
             ctx.strokeStyle = "#ffb6c1"; ctx.lineWidth = 6; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(sx - 12, sy + 10); ctx.lineTo(sx - 26, sy + 28); stroke();
+            ctx.beginPath(); ctx.moveTo(sx - 12, sy + 10); ctx.lineTo(sx - 26, sy + 28); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(sx + 12, sy + 10); ctx.lineTo(sx + 26, sy + 28); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(sx - 15, sy - 8); ctx.lineTo(sx - 28, sy - 4); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(sx + 15, sy - 8); ctx.lineTo(sx + 28, sy - 4); ctx.stroke();
