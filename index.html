@@ -30,7 +30,7 @@
         </div>
     </div>
 
- <script>
+    <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -98,10 +98,8 @@
             juegoActivo = true;
             anguloCola = 0;
             
-            // Lista inicial de enemigos (empiezan pocos)
             depredadores = [crearDepredador("carpa"), crearDepredador("bagre")];
 
-            // Multiplicamos la cantidad de algas y aumentamos la probabilidad de las Doradas valiosas
             algas = [];
             for(let i=0; i<65; i++) {
                 algas.push({
@@ -111,7 +109,6 @@
                 });
             }
 
-            // Fondo súper detallado: ¡Multiplicamos la vegetación x20 (1,200 plantas) y agregamos fango/piedras!
             burbujas = []; for(let i=0; i<100; i++) burbujas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*MAP_HEIGHT, r: Math.random()*4+2, v: Math.random()*1.5+0.5});
             plantas = []; for(let i=0; i<1200; i++) plantas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*800 + (MAP_HEIGHT-850), h: Math.random()*150+60, tono: Math.random() > 0.5 ? "#1b4d22" : "#2e7d32"});
             piedras = []; for(let i=0; i<150; i++) piedras.push({x: Math.random()*MAP_WIDTH, y: (MAP_HEIGHT - 30) - Math.random()*120, r: Math.random()*20+10});
@@ -121,13 +118,11 @@
             if (!juegoActivo) return;
             tiempoRestante--;
             
-            // DIFICULTAD DINÁMICA: Cada 15 segundos nacen más enemigos y se vuelven más furiosos
             if (tiempoRestante % 15 === 0 && tiempoRestante > 0) {
                 let tipos = ["carpa", "bagre", "garza"];
                 let nuevoTipo = tipos[Math.floor(Math.random() * tipos.length)];
                 depredadores.push(crearDepredador(nuevoTipo));
                 
-                // Hacer que todos los depredadores existentes aceleren su nado
                 depredadores.forEach(d => {
                     d.vx *= 1.15;
                     if(d.vy !== 0) d.vy *= 1.15;
@@ -159,7 +154,7 @@
             window.location.href = "https://google.com";
         }
 
-function update() {
+        function update() {
             if (!juegoActivo) return;
 
             let moviendose = false;
@@ -181,7 +176,6 @@ function update() {
 
             burbujas.forEach(b => { b.y -= b.v; if(b.y < 0) { b.y = MAP_HEIGHT; b.x = Math.random()*MAP_WIDTH; } });
 
-            // Simulación Física de IA para múltiples enemigos en pantalla
             depredadores.forEach(d => {
                 if (d.tipo === "garza") {
                     d.y += d.vy;
@@ -189,7 +183,6 @@ function update() {
                     if (d.y > MAP_HEIGHT + 100) {
                         d.y = -100;
                         d.x = Math.random() * MAP_WIDTH;
-                        // Aumentar velocidad si el tiempo es bajo
                         d.vy = 6 + (180 - tiempoRestante) * 0.05;
                     }
                 } else {
@@ -201,7 +194,6 @@ function update() {
                     }
                 }
 
-                // Colisión mortal con el nido de depredadores
                 let distEnemigo = Math.sqrt((axolo.x - d.x)**2 + (axolo.y - d.y)**2);
                 if (distEnemigo < (axolo.radius + d.radius - 12)) {
                     let nombreEnemigo = d.tipo === "garza" ? "una Garza Blanca" : d.tipo === "bagre" ? "un Bagre de lodo" : "un pez Carpa";
@@ -213,134 +205,102 @@ function update() {
                 let dist = Math.sqrt((axolo.x - alga.x)**2 + (axolo.y - alga.y)**2);
                 if(dist < (axolo.radius + 15)) {
                     score += alga.tipo === "dorada" ? 5 : 1;
-                    algas[idx] = {
-                        x: Math.random()*(MAP_WIDTH-300)+150, 
-                        y: Math.random()*(MAP_HEIGHT-300)+150, 
-                        tipo: Math.random() > 0.65 ? "dorada" : "comun"
-                    };
-                }
-            });
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            let camX = axolo.x - canvas.width / 2;
-            let camY = axolo.y - canvas.height / 2;
-            if(camX < 0) camX = 0; if(camX > MAP_WIDTH - canvas.width) camX = MAP_WIDTH - canvas.width;
-            if(camY < 0) camY = 0; if(camY > MAP_HEIGHT - canvas.height) camY = MAP_HEIGHT - canvas.height;
-
-            // Capa 1: Agua profunda
-            ctx.fillStyle = "#0a2232"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // TEXTURA ARENOSA/ROCOSA: Capas de tierra y lodo
-            ctx.fillStyle = "#160f0a"; ctx.fillRect(0 - camX, MAP_HEIGHT - 160 - camY, MAP_WIDTH, 180);
-            ctx.fillStyle = "#261c14"; ctx.fillRect(0 - camX, MAP_HEIGHT - 80 - camY, MAP_WIDTH, 90);
-
-            // Dibujar Piedras Sólidas del fondo
-            piedras.forEach(p => {
-                ctx.fillStyle = p.r > 20 ? "#3e4246" : "#51565a";
-                ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = "#1c1e20"; ctx.lineWidth = 2; ctx.stroke();
-            });
-
-            // FOLLAJE MASIVO MULTIPLICADO X20 (Pintado antes que los personajes)
-            plantas.forEach(p => {
-                let rx = p.x - camX; let ry = p.y - camY;
-                if (rx >= -50 && rx <= canvas.width + 50) {
-                    ctx.strokeStyle = p.tono; ctx.lineWidth = 8; ctx.lineCap = "round";
-                    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + 10, ry - p.h); ctx.stroke();
-                    ctx.fillStyle = p.tono === "#1b4d22" ? "#226335" : "#3c914e";
-                    ctx.beginPath(); ctx.arc(rx + 10, ry - p.h, 12, 0, Math.PI*2); ctx.fill();
-                }
-            });
-
-            ctx.strokeStyle = "rgba(40, 115, 145, 0.35)"; ctx.lineWidth = 1.5;
-            burbujas.forEach(b => {
-                ctx.beginPath(); ctx.arc(b.x - camX, b.y - camY, b.r, 0, Math.PI*2); ctx.stroke();
-            });
-
-            // Dibujar lluvia de Algas Verdes y Doradas
-            algas.forEach(alga => {
-                ctx.fillStyle = alga.tipo === "dorada" ? "#ffd700" : "#2e7d32";
-                ctx.beginPath(); ctx.arc(alga.x - camX, alga.y - camY, alga.tipo === "dorada" ? 18 : 13, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = alga.tipo === "dorada" ? "#ffffff" : "#a1dfb1";
-                ctx.beginPath(); ctx.arc(alga.x - camX + 2, alga.y - camY - 2, 4, 0, Math.PI*2); ctx.fill();
-            });
-
-            // Renderizar la Horda de Depredadores Activos
-            depredadores.forEach(d => {
-                let cx = d.x - camX; let cy = d.y - camY;
-                ctx.fillStyle = d.color; ctx.beginPath();
-                
-                if (d.tipo === "garza") {
-                    // Cuerpo cónico vertical de la garza cayendo en picada
-                    ctx.ellipse(cx, cy, d.radius*0.6, d.radius, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#ffb300"; ctx.beginPath(); // Pico afilado largo
-                    ctx.moveTo(cx, cy + d.radius); ctx.lineTo(cx - 8, cy + d.radius + 35); ctx.lineTo(cx + 8, cy + d.radius + 35); ctx.fill();
-                } else {
-                    // Peces horizontales (Carpa o Bagre)
-                    ctx.ellipse(cx, cy, d.radius, d.radius*0.58, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = d.colorAleta; ctx.beginPath();
-                    ctx.moveTo(cx - d.radius, cy); ctx.lineTo(cx - d.radius - 24, cy - 18); ctx.lineTo(cx - d.radius - 24, cy + 18); ctx.fill();
-                    if(d.tipo === "bagre") { // Bigotes del bagre
-                        ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
-                        ctx.beginPath(); ctx.moveTo(cx + 25, cy + 5); ctx.lineTo(cx + 45, cy + 15); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(cx + 25, cy - 5); ctx.lineTo(cx + 45, cy - 15); ctx.stroke();
-                    }
-                }
-            });
-
-            // DIBUJAR A AXOLO CORRECTAMENTE (CON DOS OJOS)
-            let sx = axolo.x - camX; let sy = axolo.y - camY;
-            let offsetCola = Math.sin(anguloCola) * 14;
-
-            ctx.strokeStyle = "#ffb6c1"; ctx.lineWidth = 6; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(sx - 12, sy + 10); ctx.lineTo(sx - 26, sy + 28); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(sx + 12, sy + 10); ctx.lineTo(sx + 26, sy + 28); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(sx - 15, sy - 8); ctx.lineTo(sx - 28, sy - 4); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(sx + 15, sy - 8); ctx.lineTo(sx + 28, sy - 4); ctx.stroke();
-
-            ctx.fillStyle = "#ffb6c1"; ctx.beginPath();
-            ctx.moveTo(sx, sy + 15); ctx.lineTo(sx + offsetCola*0.5, sy + 40);
-            ctx.lineTo(sx + offsetCola, sy + 65); ctx.lineTo(sx, sy + 15); ctx.fill();
-            ctx.fillStyle = "#ff1493"; ctx.beginPath(); ctx.arc(sx + offsetCola, sy + 65, 8, 0, Math.PI*2); ctx.fill();
-
-            ctx.fillStyle = "#ff1493";
-            [-18, -8, 2, 12].forEach(i => {
-                ctx.beginPath(); ctx.arc(sx - 24, sy - 12 + i, 5.5, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(sx + 24, sy - 12 + i, 5.5, 0, Math.PI*2); ctx.fill();
-            });
-
-            ctx.fillStyle = "#ffb6c1"; ctx.beginPath(); ctx.ellipse(sx, sy, 20, 25, 0, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(sx, sy - 14, 23, 0, Math.PI*2); ctx.fill();
-
-            ctx.fillStyle = "#000000";
-            ctx.beginPath(); ctx.arc(sx - 9, sy - 14, 4.5, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(sx + 9, sy - 14, 4.5, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath(); ctx.arc(sx - 8, sy - 15, 1.5, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(sx + 10, sy - 15, 1.5, 0, Math.PI*2); ctx.fill();
-
-            ctx.strokeStyle = "#7b3f00"; ctx.lineWidth = 2.5; ctx.beginPath();
-            ctx.arc(sx, sy - 11, 6, 0, Math.PI); ctx.stroke();
-
-            // Interfaz de Marcadores Fijos
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; ctx.fillRect(15, 15, 360, 85);
-            ctx.fillStyle = "#fff"; ctx.font = "bold 16px monospace";
-            
-            let mins = Math.floor(tiempoRestante / 60); let segs = tiempoRestante % 60;
-            ctx.fillText(`🌱 SCORE DE RÍO: ${score}`, 30, 42);
-            ctx.fillText(`⏱️ TIEMPO: ${mins}:${segs < 10 ? '0' : ''}${segs}`, 30, 68);
-
-            // Alerta si la horda de enemigos se vuelve crítica
-            if (depredadores.length >= 5) {
-                ctx.fillStyle = "#ff3333"; ctx.font = "bold 12px monospace";
-                ctx.fillText("⚠️ ¡PELIGRO: HORDA EXTREMA DETECTADA!", 30, 90);
-            }
-        }
-
-        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
-
-        inicializarObjetos();
+algas[idx] = {
+x: Math.random()(MAP_WIDTH-300)+150,
+y: Math.random()(MAP_HEIGHT-300)+150,
+tipo: Math.random() > 0.65 ? "dorada" : "comun"
+};
+}
+});
+}
+function draw() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+let camX = axolo.x - canvas.width / 2;
+let camY = axolo.y - canvas.height / 2;
+if(camX < 0) camX = 0; if(camX > MAP_WIDTH - canvas.width) camX = MAP_WIDTH - canvas.width;
+if(camY < 0) camY = 0; if(camY > MAP_HEIGHT - canvas.height) camY = MAP_HEIGHT - canvas.height;
+ctx.fillStyle = "#0a2232"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = "#160f0a"; ctx.fillRect(0 - camX, MAP_HEIGHT - 160 - camY, MAP_WIDTH, 180);
+ctx.fillStyle = "#261c14"; ctx.fillRect(0 - camX, MAP_HEIGHT - 80 - camY, MAP_WIDTH, 90);
+piedras.forEach(p => {
+ctx.fillStyle = p.r > 20 ? "#3e4246" : "#51565a";
+ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r, 0, Math.PI*2); ctx.fill();
+ctx.strokeStyle = "#1c1e20"; ctx.lineWidth = 2; ctx.stroke();
+});
+plantas.forEach(p => {
+let rx = p.x - camX; let ry = p.y - camY;
+if (rx >= -50 && rx <= canvas.width + 50) {
+ctx.strokeStyle = p.tono; ctx.lineWidth = 8; ctx.lineCap = "round";
+ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + 10, ry - p.h); ctx.stroke();
+ctx.fillStyle = p.tono === "#1b4d22" ? "#226335" : "#3c914e";
+ctx.beginPath(); ctx.arc(rx + 10, ry - p.h, 12, 0, Math.PI*2); ctx.fill();
+}
+});
+ctx.strokeStyle = "rgba(40, 115, 145, 0.35)"; ctx.lineWidth = 1.5;
+burbujas.forEach(b => {
+ctx.beginPath(); ctx.arc(b.x - camX, b.y - camY, b.r, 0, Math.PI*2); ctx.stroke();
+});
+algas.forEach(alga => {
+ctx.fillStyle = alga.tipo === "dorada" ? "#ffd700" : "#2e7d32";
+ctx.beginPath(); ctx.arc(alga.x - camX, alga.y - camY, alga.tipo === "dorada" ? 18 : 13, 0, Math.PI2); ctx.fill();
+ctx.fillStyle = alga.tipo === "dorada" ? "#ffffff" : "#a1dfb1";
+ctx.beginPath(); ctx.arc(alga.x - camX + 2, alga.y - camY - 2, 4, 0, Math.PI2); ctx.fill();
+});
+depredadores.forEach(d => {
+let cx = d.x - camX; let cy = d.y - camY;
+ctx.fillStyle = d.color; ctx.beginPath();
+if (d.tipo === "garza") {
+ctx.ellipse(cx, cy, d.radius0.6, d.radius, 0, 0, Math.PI2); ctx.fill();
+ctx.fillStyle = "#ffb300"; ctx.beginPath();
+ctx.moveTo(cx, cy + d.radius); ctx.lineTo(cx - 8, cy + d.radius + 35); ctx.lineTo(cx + 8, cy + d.radius + 35); ctx.fill();
+} else {
+ctx.ellipse(cx, cy, d.radius, d.radius0.58, 0, 0, Math.PI2); ctx.fill();
+ctx.fillStyle = d.colorAleta; ctx.beginPath();
+ctx.moveTo(cx - d.radius, cy); ctx.lineTo(cx - d.radius - 24, cy - 18); ctx.lineTo(cx - d.radius - 24, cy + 18); ctx.fill();
+if(d.tipo === "bagre") {
+ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
+ctx.beginPath(); ctx.moveTo(cx + 25, cy + 5); ctx.lineTo(cx + 45, cy + 15); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(cx + 25, cy - 5); ctx.lineTo(cx + 45, cy - 15); ctx.stroke();
+}
+}
+});
+let sx = axolo.x - camX; let sy = axolo.y - camY;
+let offsetCola = Math.sin(anguloCola) * 14;
+ctx.strokeStyle = "#ffb6c1"; ctx.lineWidth = 6; ctx.lineCap = "round";
+ctx.beginPath(); ctx.moveTo(sx - 12, sy + 10); ctx.lineTo(sx - 26, sy + 28); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(sx + 12, sy + 10); ctx.lineTo(sx + 26, sy + 28); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(sx - 15, sy - 8); ctx.lineTo(sx - 28, sy - 4); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(sx + 15, sy - 8); ctx.lineTo(sx + 28, sy - 4); ctx.stroke();
+ctx.fillStyle = "#ffb6c1"; ctx.beginPath();
+ctx.moveTo(sx, sy + 15); ctx.lineTo(sx + offsetCola0.5, sy + 40);
+ctx.lineTo(sx + offsetCola, sy + 65); ctx.lineTo(sx, sy + 15); ctx.fill();
+ctx.fillStyle = "#ff1493"; ctx.beginPath(); ctx.arc(sx + offsetCola, sy + 65, 8, 0, Math.PI2); ctx.fill();
+ctx.fillStyle = "#ff1493";
+[-18, -8, 2, 12].forEach(i => {
+ctx.beginPath(); ctx.arc(sx - 24, sy - 12 + i, 5.5, 0, Math.PI2); ctx.fill();
+ctx.beginPath(); ctx.arc(sx + 24, sy - 12 + i, 5.5, 0, Math.PI2); ctx.fill();
+});
+ctx.fillStyle = "#ffb6c1"; ctx.beginPath(); ctx.ellipse(sx, sy, 20, 25, 0, 0, Math.PI2); ctx.fill();
+ctx.beginPath(); ctx.arc(sx, sy - 14, 23, 0, Math.PI2); ctx.fill();
+ctx.fillStyle = "#000000";
+ctx.beginPath(); ctx.arc(sx - 9, sy - 14, 4.5, 0, Math.PI2); ctx.fill();
+ctx.beginPath(); ctx.arc(sx + 9, sy - 14, 4.5, 0, Math.PI2); ctx.fill();
+ctx.fillStyle = "#ffffff";
+ctx.beginPath(); ctx.arc(sx - 8, sy - 15, 1.5, 0, Math.PI2); ctx.fill();
+ctx.beginPath(); ctx.arc(sx + 10, sy - 15, 1.5, 0, Math.PI2); ctx.fill();
+ctx.strokeStyle = "#7b3f00"; ctx.lineWidth = 2.5; ctx.beginPath();
+ctx.arc(sx, sy - 11, 6, 0, Math.PI); ctx.stroke();
+ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(15, 15, 360, 85);
+ctx.fillStyle = "#fff"; ctx.font = "bold 16px monospace";
+let mins = Math.floor(tiempoRestante / 60); let segs = tiempoRestante % 60;
+ctx.fillText(🌱 SCORE DE RÍO: ${score}, 30, 42);
+ctx.fillText(⏱️ TIEMPO: ${mins}:${segs < 10 ? '0' : ''}${segs}, 30, 68);
+if (depredadores.length >= 5) {
+ctx.fillStyle = "#ff3333"; ctx.font = "bold 12px monospace";
+ctx.fillText("⚠️ ¡PELIGRO: HORDA EXTREMA DETECTADA!", 30, 90);
+}
+}
+function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+inicializarObjetos();
+intervaloTiempo = setInterval(contarTiempo, 1000);
+gameLoop();
