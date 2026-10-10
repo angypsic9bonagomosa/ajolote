@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🦎 Axolo Explorer: El Gran Río de Xochimilco 🌊</title>
+    <title>🦎 Axolo Explorer: Xochimilco Extremo 🌊</title>
     <style>
         body { margin: 0; padding: 0; background-color: #0b2230; overflow: hidden; font-family: 'Courier New', monospace; user-select: none; }
         canvas { display: block; margin: 0 auto; background-color: #0f2d41; }
         #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; touch-action: none; z-index: 10; }
         #joystick-knob { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: rgba(255, 192, 203, 0.8); border: 2px solid #ff1493; border-radius: 50%; }
-        .pantalla-final { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 45, 65, 0.95); color: #fff; text-align: center; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
+        .pantalla-final { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 40, 0.96); color: #fff; text-align: center; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
         .btn { padding: 15px 30px; font-size: 20px; font-weight: bold; margin: 15px; border-radius: 8px; border: none; cursor: pointer; font-family: monospace; }
         .btn-reiniciar { background-color: #ff1493; color: white; }
         .btn-salir { background-color: #555; color: white; }
@@ -21,7 +21,7 @@
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     
     <div id="pantallaFinal" class="pantalla-final">
-        <h1 id="tituloFinal" style="font-size: 40px; color: #ff1493;">¡FIN DEL JUEGO!</h1>
+        <h1 id="tituloFinal" style="font-size: 40px; color: #ff3333;">¡FIN DEL JUEGO!</h1>
         <p id="motivoFinal" style="font-size: 22px;"></p>
         <h2 id="puntosFinal" style="font-size: 35px; color: #ffd700;">Puntos Totales: 0</h2>
         <div>
@@ -30,7 +30,7 @@
         </div>
     </div>
 
-<script>
+ <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -40,7 +40,7 @@
         const MAP_WIDTH = 6000;
         const MAP_HEIGHT = 2000;
 
-        let axolo, joystick, algas, burbujas, plantas, piedras, depredador;
+        let axolo, joystick, algas, burbujas, plantas, piedras, depredadores;
         let score, tiempoRestante, juegoActivo, anguloCola, intervaloTiempo;
 
         joystick = { active: false, startX: 0, startY: 0, dirX: 0, dirY: 0 };
@@ -56,7 +56,7 @@
 
         window.addEventListener("touchmove", (e) => {
             if (!joystick.active) return;
-            let t = e.touches[0];
+            let t = e.touches;
             let dx = t.clientX - joystick.startX;
             let dy = t.clientY - joystick.startY;
             let dist = Math.sqrt(dx*dx + dy*dy);
@@ -77,34 +77,65 @@
         window.addEventListener("keydown", (e) => keys[e.key] = true);
         window.addEventListener("keyup", (e) => keys[e.key] = false);
 
+        function crearDepredador(tipo) {
+            let x = Math.random() > 0.5 ? -200 : MAP_WIDTH + 200;
+            let y = Math.random() * (MAP_HEIGHT - 300) + 100;
+            let vx = (Math.random() * 3 + 4) * (x < 0 ? 1 : -1);
+            
+            if (tipo === "garza") {
+                return { x: Math.random() * MAP_WIDTH, y: -100, vx: (Math.random() * 2 - 1) * 2, vy: 6, radius: 35, tipo: "garza", color: "#f5f5f5", colorAleta: "#e0e0e0" };
+            } else if (tipo === "bagre") {
+                return { x: x, y: y, vx: vx * 1.3, vy: 0, radius: 38, tipo: "bagre", color: "#424242", colorAleta: "#212121" };
+            } else {
+                return { x: x, y: y, vx: vx, vy: 0, radius: 45, tipo: "carpa", color: "#d35400", colorAleta: "#a04000" };
+            }
+        }
+
         function inicializarObjetos() {
-            axolo = { x: canvas.width/2, y: MAP_HEIGHT/2, speed: 6.5, radius: 24 };
+            axolo = { x: canvas.width/2, y: MAP_HEIGHT/2, speed: 7.5, radius: 24 };
             score = 0;
             tiempoRestante = 180;
             juegoActivo = true;
             anguloCola = 0;
             
-            depredador = { x: -200, y: Math.random()*MAP_HEIGHT, vx: 5, vy: 1, radius: 45, activo: true };
+            // Lista inicial de enemigos (empiezan pocos)
+            depredadores = [crearDepredador("carpa"), crearDepredador("bagre")];
 
+            // Multiplicamos la cantidad de algas y aumentamos la probabilidad de las Doradas valiosas
             algas = [];
-            for(let i=0; i<35; i++) {
+            for(let i=0; i<65; i++) {
                 algas.push({
                     x: Math.random()*(MAP_WIDTH-300)+150, 
                     y: Math.random()*(MAP_HEIGHT-300)+150, 
-                    tipo: Math.random() > 0.8 ? "dorada" : "comun"
+                    tipo: Math.random() > 0.65 ? "dorada" : "comun"
                 });
             }
 
-            burbujas = []; for(let i=0; i<80; i++) burbujas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*MAP_HEIGHT, r: Math.random()*4+2, v: Math.random()*1.5+0.5});
-            plantas = []; for(let i=0; i<60; i++) plantas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*400 + (MAP_HEIGHT-450), h: Math.random()*120+70});
-            piedras = []; for(let i=0; i<40; i++) piedras.push({x: Math.random()*MAP_WIDTH, y: MAP_HEIGHT - 35 - Math.random()*20, r: Math.random()*25+15});
+            // Fondo súper detallado: ¡Multiplicamos la vegetación x20 (1,200 plantas) y agregamos fango/piedras!
+            burbujas = []; for(let i=0; i<100; i++) burbujas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*MAP_HEIGHT, r: Math.random()*4+2, v: Math.random()*1.5+0.5});
+            plantas = []; for(let i=0; i<1200; i++) plantas.push({x: Math.random()*MAP_WIDTH, y: Math.random()*800 + (MAP_HEIGHT-850), h: Math.random()*150+60, tono: Math.random() > 0.5 ? "#1b4d22" : "#2e7d32"});
+            piedras = []; for(let i=0; i<150; i++) piedras.push({x: Math.random()*MAP_WIDTH, y: (MAP_HEIGHT - 30) - Math.random()*120, r: Math.random()*20+10});
         }
 
         function contarTiempo() {
             if (!juegoActivo) return;
             tiempoRestante--;
+            
+            // DIFICULTAD DINÁMICA: Cada 15 segundos nacen más enemigos y se vuelven más furiosos
+            if (tiempoRestante % 15 === 0 && tiempoRestante > 0) {
+                let tipos = ["carpa", "bagre", "garza"];
+                let nuevoTipo = tipos[Math.floor(Math.random() * tipos.length)];
+                depredadores.push(crearDepredador(nuevoTipo));
+                
+                // Hacer que todos los depredadores existentes aceleren su nado
+                depredadores.forEach(d => {
+                    d.vx *= 1.15;
+                    if(d.vy !== 0) d.vy *= 1.15;
+                });
+            }
+
             if (tiempoRestante <= 0) {
-                finalizarJuego("¡FIN DEL TIEMPO!", "¡Lograste mantener a Axolo a salvo durante los 3 minutos!");
+                finalizarJuego("¡HÉROE DE XOCHIMILCO!", "¡Axolo resistió la oleada extrema y salvó el río!");
             }
         }
 
@@ -146,35 +177,46 @@ function update() {
             if(axolo.x < 30) axolo.x = 30; if(axolo.x > MAP_WIDTH-30) axolo.x = MAP_WIDTH-30;
             if(axolo.y < 30) axolo.y = 30; if(axolo.y > MAP_HEIGHT-40) axolo.y = MAP_HEIGHT-40;
 
-            anguloCola += moviendose ? 0.22 : 0.04;
+            anguloCola += moviendose ? 0.25 : 0.04;
 
             burbujas.forEach(b => { b.y -= b.v; if(b.y < 0) { b.y = MAP_HEIGHT; b.x = Math.random()*MAP_WIDTH; } });
 
-            depredador.x += depredador.vx;
-            depredador.y += Math.sin(depredador.x * 0.01) * 2;
-            if (depredador.x > MAP_WIDTH + 200) {
-                depredador.x = -200;
-                depredador.y = Math.random() * MAP_HEIGHT;
-                depredador.vx = Math.random() * 3 + 5;
-            }
+            // Simulación Física de IA para múltiples enemigos en pantalla
+            depredadores.forEach(d => {
+                if (d.tipo === "garza") {
+                    d.y += d.vy;
+                    d.x += d.vx;
+                    if (d.y > MAP_HEIGHT + 100) {
+                        d.y = -100;
+                        d.x = Math.random() * MAP_WIDTH;
+                        // Aumentar velocidad si el tiempo es bajo
+                        d.vy = 6 + (180 - tiempoRestante) * 0.05;
+                    }
+                } else {
+                    d.x += d.vx;
+                    d.y += Math.sin(d.x * 0.015) * 2.5;
+                    if ((d.vx > 0 && d.x > MAP_WIDTH + 200) || (d.vx < 0 && d.x < -200)) {
+                        d.x = d.vx > 0 ? -200 : MAP_WIDTH + 200;
+                        d.y = Math.random() * (MAP_HEIGHT - 300) + 100;
+                    }
+                }
 
-            let distDepredador = Math.sqrt((axolo.x - depredador.x)**2 + (axolo.y - depredador.y)**2);
-            if (distDepredador < (axolo.radius + depredador.radius - 10)) {
-                finalizarJuego("💀 ¡AXOLO FUE CAPTURADO!", "El pez Carpa gigante te alcanzó en las profundidades.");
-            }
+                // Colisión mortal con el nido de depredadores
+                let distEnemigo = Math.sqrt((axolo.x - d.x)**2 + (axolo.y - d.y)**2);
+                if (distEnemigo < (axolo.radius + d.radius - 12)) {
+                    let nombreEnemigo = d.tipo === "garza" ? "una Garza Blanca" : d.tipo === "bagre" ? "un Bagre de lodo" : "un pez Carpa";
+                    finalizarJuego("💀 ¡AXOLO FUE DESTRUIDO!", `Te atrapó ${nombreEnemigo} en la zona de peligro.`);
+                }
+            });
 
             algas.forEach((alga, idx) => {
                 let dist = Math.sqrt((axolo.x - alga.x)**2 + (axolo.y - alga.y)**2);
-                if(dist < (axolo.radius + 14)) {
-                    if (alga.tipo === "dorada") {
-                        score += 5;
-                    } else {
-                        score += 1;
-                    }
+                if(dist < (axolo.radius + 15)) {
+                    score += alga.tipo === "dorada" ? 5 : 1;
                     algas[idx] = {
                         x: Math.random()*(MAP_WIDTH-300)+150, 
                         y: Math.random()*(MAP_HEIGHT-300)+150, 
-                        tipo: Math.random() > 0.85 ? "dorada" : "comun"
+                        tipo: Math.random() > 0.65 ? "dorada" : "comun"
                     };
                 }
             });
@@ -188,41 +230,68 @@ function update() {
             if(camX < 0) camX = 0; if(camX > MAP_WIDTH - canvas.width) camX = MAP_WIDTH - canvas.width;
             if(camY < 0) camY = 0; if(camY > MAP_HEIGHT - canvas.height) camY = MAP_HEIGHT - canvas.height;
 
-            ctx.fillStyle = "#0f2d41"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#1c140e"; ctx.fillRect(0 - camX, MAP_HEIGHT - 40 - camY, MAP_WIDTH, 60);
+            // Capa 1: Agua profunda
+            ctx.fillStyle = "#0a2232"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // TEXTURA ARENOSA/ROCOSA: Capas de tierra y lodo
+            ctx.fillStyle = "#160f0a"; ctx.fillRect(0 - camX, MAP_HEIGHT - 160 - camY, MAP_WIDTH, 180);
+            ctx.fillStyle = "#261c14"; ctx.fillRect(0 - camX, MAP_HEIGHT - 80 - camY, MAP_WIDTH, 90);
 
+            // Dibujar Piedras Sólidas del fondo
             piedras.forEach(p => {
-                ctx.fillStyle = "#4a4f54"; ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = p.r > 20 ? "#3e4246" : "#51565a";
+                ctx.beginPath(); ctx.arc(p.x - camX, p.y - camY, p.r, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = "#1c1e20"; ctx.lineWidth = 2; ctx.stroke();
             });
 
+            // FOLLAJE MASIVO MULTIPLICADO X20 (Pintado antes que los personajes)
             plantas.forEach(p => {
-                ctx.strokeStyle = "#1b4d22"; ctx.lineWidth = 10; ctx.lineCap = "round";
-                ctx.beginPath(); ctx.moveTo(p.x - camX, p.y - camY);
-                ctx.lineTo(p.x + 15 - camX, p.y - p.h - camY); ctx.stroke();
-                ctx.fillStyle = "#2e7d32"; ctx.beginPath(); ctx.arc(p.x + 15 - camX, p.y - p.h - camY, 14, 0, Math.PI*2); ctx.fill();
+                let rx = p.x - camX; let ry = p.y - camY;
+                if (rx >= -50 && rx <= canvas.width + 50) {
+                    ctx.strokeStyle = p.tono; ctx.lineWidth = 8; ctx.lineCap = "round";
+                    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + 10, ry - p.h); ctx.stroke();
+                    ctx.fillStyle = p.tono === "#1b4d22" ? "#226335" : "#3c914e";
+                    ctx.beginPath(); ctx.arc(rx + 10, ry - p.h, 12, 0, Math.PI*2); ctx.fill();
+                }
             });
 
-            ctx.strokeStyle = "rgba(40, 110, 140, 0.4)"; ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "rgba(40, 115, 145, 0.35)"; ctx.lineWidth = 1.5;
             burbujas.forEach(b => {
                 ctx.beginPath(); ctx.arc(b.x - camX, b.y - camY, b.r, 0, Math.PI*2); ctx.stroke();
             });
 
+            // Dibujar lluvia de Algas Verdes y Doradas
             algas.forEach(alga => {
-                ctx.fillStyle = alga.tipo === "dorada" ? "#ffd700" : "#388e3c";
-                ctx.beginPath(); ctx.arc(alga.x - camX, alga.y - camY, alga.tipo === "dorada" ? 18 : 14, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = alga.tipo === "dorada" ? "#ffffff" : "#81c784";
+                ctx.fillStyle = alga.tipo === "dorada" ? "#ffd700" : "#2e7d32";
+                ctx.beginPath(); ctx.arc(alga.x - camX, alga.y - camY, alga.tipo === "dorada" ? 18 : 13, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = alga.tipo === "dorada" ? "#ffffff" : "#a1dfb1";
                 ctx.beginPath(); ctx.arc(alga.x - camX + 2, alga.y - camY - 2, 4, 0, Math.PI*2); ctx.fill();
             });
 
-            let cx = depredador.x - camX; let cy = depredador.y - camY;
-            ctx.fillStyle = "#d35400"; ctx.beginPath();
-            ctx.ellipse(cx, cy, depredador.radius, depredador.radius*0.6, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#a04000"; ctx.beginPath();
-            ctx.moveTo(cx - depredador.radius, cy); ctx.lineTo(cx - depredador.radius - 25, cy - 20);
-            ctx.lineTo(cx - depredador.radius - 25, cy + 20); ctx.fill();
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cx + 25, cy - 8, 7, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(cx + 27, cy - 8, 4, 0, Math.PI*2); ctx.fill();
+            // Renderizar la Horda de Depredadores Activos
+            depredadores.forEach(d => {
+                let cx = d.x - camX; let cy = d.y - camY;
+                ctx.fillStyle = d.color; ctx.beginPath();
+                
+                if (d.tipo === "garza") {
+                    // Cuerpo cónico vertical de la garza cayendo en picada
+                    ctx.ellipse(cx, cy, d.radius*0.6, d.radius, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#ffb300"; ctx.beginPath(); // Pico afilado largo
+                    ctx.moveTo(cx, cy + d.radius); ctx.lineTo(cx - 8, cy + d.radius + 35); ctx.lineTo(cx + 8, cy + d.radius + 35); ctx.fill();
+                } else {
+                    // Peces horizontales (Carpa o Bagre)
+                    ctx.ellipse(cx, cy, d.radius, d.radius*0.58, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = d.colorAleta; ctx.beginPath();
+                    ctx.moveTo(cx - d.radius, cy); ctx.lineTo(cx - d.radius - 24, cy - 18); ctx.lineTo(cx - d.radius - 24, cy + 18); ctx.fill();
+                    if(d.tipo === "bagre") { // Bigotes del bagre
+                        ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.moveTo(cx + 25, cy + 5); ctx.lineTo(cx + 45, cy + 15); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(cx + 25, cy - 5); ctx.lineTo(cx + 45, cy - 15); ctx.stroke();
+                    }
+                }
+            });
 
+            // DIBUJAR A AXOLO CORRECTAMENTE (CON DOS OJOS)
             let sx = axolo.x - camX; let sy = axolo.y - camY;
             let offsetCola = Math.sin(anguloCola) * 14;
 
@@ -257,31 +326,21 @@ function update() {
             ctx.strokeStyle = "#7b3f00"; ctx.lineWidth = 2.5; ctx.beginPath();
             ctx.arc(sx, sy - 11, 6, 0, Math.PI); ctx.stroke();
 
-            ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(15, 15, 360, 85);
+            // Interfaz de Marcadores Fijos
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; ctx.fillRect(15, 15, 360, 85);
             ctx.fillStyle = "#fff"; ctx.font = "bold 16px monospace";
             
-            let mins = Math.floor(tiempoRestante / 60);
-            let segs = tiempoRestante % 60;
-            let relojTexto = `⏱️ TIEMPO: ${mins}:${segs < 10 ? '0' : ''}${segs}`;
-            
-            ctx.fillText(`🌱 PUNTOS DE RÍO: ${score}`, 30, 42);
-            ctx.fillText(relojTexto, 30, 68);
-            
-            if (Math.abs(depredador.x - axolo.x) < 600) {
-                ctx.fillStyle = "#ff3333"; ctx.font = "bold 14px monospace";
-                ctx.fillText("⚠️ ¡DEPREDADOR DETECTADO CERCA!", 30, 90);
+            let mins = Math.floor(tiempoRestante / 60); let segs = tiempoRestante % 60;
+            ctx.fillText(`🌱 SCORE DE RÍO: ${score}`, 30, 42);
+            ctx.fillText(`⏱️ TIEMPO: ${mins}:${segs < 10 ? '0' : ''}${segs}`, 30, 68);
+
+            // Alerta si la horda de enemigos se vuelve crítica
+            if (depredadores.length >= 5) {
+                ctx.fillStyle = "#ff3333"; ctx.font = "bold 12px monospace";
+                ctx.fillText("⚠️ ¡PELIGRO: HORDA EXTREMA DETECTADA!", 30, 90);
             }
         }
 
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
 
         inicializarObjetos();
-        intervaloTiempo = setInterval(contarTiempo, 1000);
-        gameLoop();
-    </script>
-</body>
-</html>
